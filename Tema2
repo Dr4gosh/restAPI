@@ -1,0 +1,74 @@
+from flask import Flask,jsonify, request, abort
+import json
+app = Flask(__name__)
+
+lista = [{'id':'0','name':'carcasa','pret':'10'},
+		 {'id':'1','name':'procesor','pret':'1125'},
+		  {'id':'2','name':'couler','pret':'15'},
+		   {'id':'3','name':'router','pret':'5'}]
+new_lista = []
+def notfound():
+    print("Item not found")
+    abort(404, description = "Id not found")
+@app.route('/ps', methods = ['GET'])
+def returnAll():
+    return jsonify({'ids' : lista})
+@app.route('/ps/<string:id>', methods=['GET'])
+def getone(id):
+    try:
+     piese = [ids for ids in lista if ids['id'] == id]
+     return jsonify({'ids' : piese[0]})
+    except IndexError:
+        notfound()
+@app.route('/ps', methods = ['POST'])
+def postone():
+        flag = 0
+        for i in lista:
+            if i['id'] == request.json['id']:
+                flag = 1
+                break
+        if flag == 1:
+            print("item existent")
+            return jsonify({'lista': lista})
+        else:
+            piese = {'id': request.json['id']}
+            lista.append(json.loads(request.data))
+            return jsonify({'lista': lista})
+
+@app.route('/ps/<string:id>', methods=['PUT','POST'])
+def putone(id):
+    try:
+        flag = 0
+        for i in lista:
+            if i['id'] == request.json['id']:
+                flag = 1
+                break
+        if flag == 1:
+            print("item existent")
+            return jsonify({'lista': lista})
+        else:
+             piese = [ids for ids in lista if ids['id'] == id]
+             piese[0]['id'] = request.json['id']
+             piese[0]['name'] = request.json['name']
+             piese[0]['pret'] = request.json['pret']
+             return jsonify({'ids': piese[0]})
+    except IndexError:
+        postone()
+        piese = {'id': request.json['id']}
+        return jsonify({'lista': lista})
+@app.route('/ps/<string:id>', methods=['DELETE'])
+def deleteone(id):
+    try:
+        piese = [ids for ids in lista if ids['id'] == id]
+        lista.remove(piese[0])
+        return jsonify({'lista' : lista})
+    except IndexError:
+        notfound()
+
+@app.route('/ps', methods = ['DELETE'])
+def deleteall():
+        lista = new_lista
+        return jsonify({'lista': lista})
+
+if __name__ == '__main__':
+    app.run(debug=True)
